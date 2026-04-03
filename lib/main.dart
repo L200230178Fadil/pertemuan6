@@ -6,38 +6,37 @@ import 'package:flutter_pdfview/flutter_pdfview.dart';
 
 void main() {
   runApp(MaterialApp(
-    theme: ThemeData(primarySwatch: Colors.blue),
+    theme: ThemeData(primarySwatch: Colors.brown),
     home: BookListScreen(),
   ));
 }
 
 class BookListScreen extends StatelessWidget {
-  // 1. Menambahkan jumlah buku menjadi 10
+  // Daftar 10 buku sesuai file yang Anda unggah
   final List<Map<String, String>> books = [
-    {'title': 'Algorithms to Live By', 'author': 'Brian Christian', 'description': 'The computer science of human decisions.', 'pdfPath': 'assets/pdf/algo.pdf'},
-    {'title': 'Beginning Programming', 'author': 'Wallace Wang', 'description': 'All-in-One Desk Reference for Dummies.', 'pdfPath': 'assets/pdf/prog.pdf'},
-    {'title': 'Streamlit for Data Science', 'author': 'Tyler Richards', 'description': 'Create interactive data apps in Python.', 'pdfPath': 'assets/pdf/streamlit.pdf'},
-    {'title': 'Clean Code', 'author': 'Robert C. Martin', 'description': 'A Handbook of Agile Software Craftsmanship.', 'pdfPath': 'assets/pdf/clean_code.pdf'},
-    {'title': 'The Pragmatic Programmer', 'author': 'Andrew Hunt', 'description': 'Your journey to mastery.', 'pdfPath': 'assets/pdf/pragmatic.pdf'},
-    {'title': 'You Don\'t Know JS', 'author': 'Kyle Simpson', 'description': 'Deep dive into JavaScript.', 'pdfPath': 'assets/pdf/js.pdf'},
-    {'title': 'Dart in Action', 'author': 'Chris Buckett', 'description': 'Master the Dart language.', 'pdfPath': 'assets/pdf/dart.pdf'},
-    {'title': 'Flutter Cookbook', 'author': 'Alberto Miola', 'description': 'Practical recipes for Flutter.', 'pdfPath': 'assets/pdf/flutter.pdf'},
-    {'title': 'Atomic Habits', 'author': 'James Clear', 'description': 'An easy way to build good habits.', 'pdfPath': 'assets/pdf/habits.pdf'},
-    {'title': 'Deep Work', 'author': 'Cal Newport', 'description': 'Rules for focused success.', 'pdfPath': 'assets/pdf/deepwork.pdf'},
+    {'title': 'Jane Eyre', 'author': 'Charlotte Brontë', 'pdf': '119-2014-04-09-Jane Eyre.pdf'},
+    {'title': 'Wuthering Heights', 'author': 'Emily Brontë', 'pdf': '119-2014-04-09-Wuthering Heights.pdf'},
+    {'title': 'The Great Gatsby', 'author': 'F. Scott Fitzgerald', 'pdf': '2015.184960.The-Great-Gatsby.pdf'},
+    {'title': 'The Adventures of Sherlock Holmes', 'author': 'Arthur Conan Doyle', 'pdf': 'advs.pdf'},
+    {'title': 'Alice\'s Adventures in Wonderland', 'author': 'Lewis Carroll', 'pdf': 'Alice_in_Wonderland.pdf'},
+    {'title': 'Peter Pan and Wendy', 'author': 'J.M. Barrie', 'pdf': 'Barrie_Peter_Pan_and_Wendy_1911_edition.pdf'},
+    {'title': 'Frankenstein', 'author': 'Mary Shelley', 'pdf': 'frank-a5.pdf'},
+    {'title': 'Gulliver\'s Travels', 'author': 'Jonathan Swift', 'pdf': 'gulliverstravels1918swif.pdf'},
+    {'title': 'Pride and Prejudice', 'author': 'Jane Austen', 'pdf': 'Pride.pdf'},
+    {'title': 'The Wonderful Wizard of Oz', 'author': 'L. Frank Baum', 'pdf': 'wonderfulwizardo00baumiala.pdf'},
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('My Digital Library')),
+      appBar: AppBar(title: Text('Koleksi Buku Klasik')),
       body: ListView.builder(
         itemCount: books.length,
         itemBuilder: (context, index) {
           return ListTile(
-            leading: CircleAvatar(child: Text('${index + 1}')),
+            leading: Icon(Icons.menu_book),
             title: Text(books[index]['title']!),
             subtitle: Text(books[index]['author']!),
-            trailing: Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
               Navigator.push(
                 context,
@@ -45,8 +44,7 @@ class BookListScreen extends StatelessWidget {
                   builder: (context) => BookDetailScreen(
                     title: books[index]['title']!,
                     author: books[index]['author']!,
-                    description: books[index]['description']!,
-                    pdfPath: books[index]['pdfPath']!,
+                    pdfFileName: books[index]['pdf']!,
                   ),
                 ),
               );
@@ -59,67 +57,49 @@ class BookListScreen extends StatelessWidget {
 }
 
 class BookDetailScreen extends StatelessWidget {
-  final String title, author, description, pdfPath;
+  final String title, author, pdfFileName;
 
-  BookDetailScreen({required this.title, required this.author, required this.description, required this.pdfPath});
+  BookDetailScreen({required this.title, required this.author, required this.pdfFileName});
 
-  // Fungsi pembantu untuk menyalin file asset ke penyimpanan lokal agar bisa dibaca PDFView
-  Future<String> fromAsset(String assetPath, String filename) async {
+  // Fungsi untuk menyiapkan file dari Assets ke Local Storage
+  Future<String> preparePdf() async {
     try {
-      var data = await rootBundle.load(assetPath);
-      var bytes = data.buffer.asUint8List();
-      var dir = await getApplicationDocumentsDirectory();
-      File file = File("${dir.path}/$filename");
-      await file.writeAsBytes(bytes, flush: true);
-      return file.path;
+      final ByteData data = await rootBundle.load("assets/pdf/$pdfFileName");
+      final Directory tempDir = await getApplicationDocumentsDirectory();
+      final File tempFile = File("${tempDir.path}/$pdfFileName");
+      await tempFile.writeAsBytes(data.buffer.asUint8List(), flush: true);
+      return tempFile.path;
     } catch (e) {
-      throw Exception('Error parsing asset file!');
+      throw Exception("Gagal memuat file PDF: $e");
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Book Info')),
+      appBar: AppBar(title: Text(title)),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-            SizedBox(height: 8),
-            Text('By $author', style: TextStyle(fontSize: 18, fontStyle: FontStyle.italic, color: Colors.grey[700])),
-            Divider(height: 30),
-            Text('Description:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            SizedBox(height: 8),
-            Text(description, style: TextStyle(fontSize: 16)),
+            Icon(Icons.auto_stories, size: 100, color: Colors.brown),
+            SizedBox(height: 20),
+            Text(title, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+            Text("Oleh $author", style: TextStyle(fontSize: 18, fontStyle: FontStyle.italic)),
             Spacer(),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text('Back'),
+            ElevatedButton.icon(
+              icon: Icon(Icons.picture_as_pdf),
+              label: Text("Read the book"),
+              style: ElevatedButton.styleFrom(minimumSize: Size(double.infinity, 50)),
+              onPressed: () async {
+                String path = await preparePdf();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ReadingBookFile(path: path, title: title),
                   ),
-                ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // 2. Fungsi Navigasi ke Halaman PDF
-                      fromAsset(pdfPath, 'temp_book.pdf').then((path) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ReadingBookFile(path: path, title: title),
-                          ),
-                        );
-                      });
-                    },
-                    child: Text('Read the book'),
-                  ),
-                ),
-              ],
+                );
+              },
             ),
           ],
         ),
@@ -128,20 +108,23 @@ class BookDetailScreen extends StatelessWidget {
   }
 }
 
-// Halaman Implementasi PDF View
 class ReadingBookFile extends StatelessWidget {
-  final String? path;
+  final String path;
   final String title;
 
-  ReadingBookFile({this.path, required this.title});
+  ReadingBookFile({required this.path, required this.title});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(title)),
-      body: path != null
-          ? PDFView(filePath: path)
-          : Center(child: CircularProgressIndicator()),
+      body: PDFView(
+        filePath: path,
+        enableSwipe: true,
+        swipeHorizontal: false,
+        autoSpacing: true,
+        pageFling: true,
+      ),
     );
   }
 }
